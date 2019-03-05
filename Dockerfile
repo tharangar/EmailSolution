@@ -110,7 +110,7 @@ RUN chmod 755 /bin/.env
 
 # Adding pod start commands to the email image
 ADD ./configs/pod_start.sh /bin/pod_start.sh
-
+RUN chmod +x /bin/pod_start.sh
 
 # postfixlog analyser 
 COPY ./configs/logAnalyze/pflogsumm /usr/local/bin/pflogsumm
