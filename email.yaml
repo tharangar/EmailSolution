@@ -1,0 +1,94 @@
+kind: Service
+apiVersion: v1
+metadata:
+  name: "email"
+  namespace: monitoring
+spec:
+  type: LoadBalancer
+  selector:
+    app: email
+  ports:
+    #- protocol: "TCP"
+    #  port: 25
+    #  targetPort: 25
+    - protocol: TCP
+      port: 25
+      targetPort: 25
+      name: smtp
+      #nodePort: 30025
+    - protocol: TCP
+      port: 143
+      targetPort: 143
+      name: imap
+      #nodePort: 30143
+    - protocol: TCP
+      port: 587
+      targetPort: 587
+      name: submission
+    - protocol: TCP
+      port: 4190
+      targetPort: 4190
+      name: sieve
+    - protocol: TCP
+      port: 11334
+      targetPort: 11334
+      name: rspamd
+      #nodePort: 31334
+  #type: NodePort
+---        
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: email
+  namespace: monitoring
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: email
+        track: stable
+    spec:
+      containers:
+        - name: email
+          image: email
+          #image: lsflk/copper:emailserver
+          imagePullPolicy: Always
+          #command: ["/bin/sh"]
+          #args: ["-c", "service postfix start"]
+          #args: ["-c", "while true; do echo hello; sleep 10;done"]
+          ports:
+            - name: submission
+              containerPort: 587
+            - name: imap
+              containerPort: 143
+            - name: smtp
+              containerPort: 25
+            - name: seive
+              containerPort: 4190
+            - name: rspamd
+              containerPort: 11334
+            - name: health
+              containerPort: 26
+          lifecycle:
+            postStart:
+              exec:
+                command: ["/bin/sh", "-c", "service postfix start && service dovecot start && service rspamd start"]
+                #command: ["/bin/sh", "-c", "service postfix start"]
+                #command: ["/bin/sh", "-c", "service dovecot start"]
+                #command: ["/bin/sh", "-c", "service rspamd start"]
+          #lifecycle:
+            #postStart:
+              #exec:
+                #command: ["/bin/sh"]
+                #args: ["-c", "service postfix start"]
+          resources:
+            limits:
+              #cpu: 0.5
+              #memory: "500Mi"
+              cpu: 400m # ~4/10th of a core
+              memory: "500Mi" # 500 Mebibytes 
+      #command: ["/bin/sh"]
+      #  args: ["-c", "service postfix start"]  
+   
+              
